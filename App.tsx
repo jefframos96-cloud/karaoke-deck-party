@@ -407,7 +407,7 @@ export default function App() {
                      initial={{ opacity: 0, y: 20 }}
                      animate={{ opacity: 1, y: 0 }}
                      exit={{ opacity: 0, y: -20 }}
-                     className="w-full max-w-md grid gap-6 p-4"
+                     className="w-full max-w-md grid gap-4 p-4"
                    >
                      <h2 className="text-2xl font-bold text-center text-white mb-2">¿Cómo quieren jugar hoy?</h2>
                      
@@ -422,7 +422,7 @@ export default function App() {
                            <div>
                               <h3 className="text-xl font-bold text-white mb-1">Estructura Dinámica</h3>
                               <p className="text-indigo-200 text-sm leading-relaxed">
-                                 Un flujo perfecto: Empezamos con cartas rápidas, seguimos con retos grupales y subimos la intensidad. ¡Ideal para empezar!
+                                 Un flujo perfecto: Empezamos con cartas rápidas, seguimos con retos grupales y subimos la intensidad.
                               </p>
                            </div>
                         </div>
@@ -444,6 +444,39 @@ export default function App() {
                            </div>
                         </div>
                      </button>
+
+                     {/* UTILITY BUTTONS MOVED HERE FOR BETTER VISIBILITY */}
+                     <div className="flex gap-3 mt-2">
+                        <button 
+                            onClick={() => setShowCatalog(true)}
+                            className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-indigo-200 hover:text-white py-3 rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-2 active:scale-95"
+                        >
+                            <Eye size={18} />
+                            Ver Cartas
+                        </button>
+                        
+                        <Button 
+                            onClick={handleGenerateAI} 
+                            variant="magic" 
+                            className="flex-[2] text-sm py-3 rounded-2xl"
+                            icon={isLoading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Sparkles size={16} />}
+                            disabled={isLoading}
+                        >
+                            {isLoading ? 'Creando...' : 'Crear con IA'}
+                        </Button>
+                     </div>
+
+                     {/* INSTALL APP BUTTON - Only visible if PWA prompt is captured */}
+                     {installPrompt && (
+                      <button
+                        onClick={handleInstallClick}
+                        className="w-full bg-emerald-600/20 border border-emerald-500/50 text-emerald-400 hover:bg-emerald-600/30 py-3 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition-all mt-1"
+                      >
+                        <Download size={14} />
+                        INSTALAR APP EN EL CELULAR
+                      </button>
+                    )}
+
                    </motion.div>
                 )}
 
@@ -552,42 +585,6 @@ export default function App() {
                 </div>
               )}
               
-              {/* AI & CATALOG Buttons - Visible in Mode Selection */}
-              {phase === GamePhase.MODE_SELECTION && (
-                 <div className="mt-4 pt-4 border-t border-white/10 w-full flex flex-col gap-3">
-                    <div className="flex gap-3">
-                        <button 
-                            onClick={() => setShowCatalog(true)}
-                            className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-indigo-200 hover:text-white py-3 rounded-full text-sm font-bold transition-all flex items-center justify-center gap-2 active:scale-95"
-                        >
-                            <Eye size={18} />
-                            Ver Cartas
-                        </button>
-                        
-                        <Button 
-                            onClick={handleGenerateAI} 
-                            variant="magic" 
-                            className="flex-[2] text-sm py-3"
-                            icon={isLoading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Sparkles size={16} />}
-                            disabled={isLoading}
-                        >
-                            {isLoading ? 'Creando...' : 'Crear con IA'}
-                        </Button>
-                    </div>
-
-                    {/* INSTALL APP BUTTON - Only visible if PWA prompt is captured */}
-                    {installPrompt && (
-                      <button
-                        onClick={handleInstallClick}
-                        className="w-full bg-emerald-600/20 border border-emerald-500/50 text-emerald-400 hover:bg-emerald-600/30 py-2 rounded-full text-xs font-bold flex items-center justify-center gap-2 transition-all"
-                      >
-                        <Download size={14} />
-                        INSTALAR APP EN EL CELULAR
-                      </button>
-                    )}
-                 </div>
-              )}
-
             </footer>
           </motion.div>
         )}
