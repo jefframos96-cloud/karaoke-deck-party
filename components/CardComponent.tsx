@@ -34,7 +34,9 @@ export const CardComponent: React.FC<CardComponentProps> = ({
   return (
     <motion.div
       layout
-      className="absolute w-72 h-96 sm:w-80 sm:h-[420px] cursor-pointer touch-manipulation perspective-1000"
+      // CHANGED: Reduced base size from w-72 h-96 to w-64 h-80 for better mobile fit
+      // Added max-w-[85vw] to ensure it never overflows width on tiny screens
+      className="absolute w-64 h-80 sm:w-80 sm:h-[420px] max-w-[85vw] cursor-pointer touch-manipulation perspective-1000"
       style={{
         zIndex: total - index,
         // Visual stacking effect
@@ -135,4 +137,4 @@ export const CardComponent: React.FC<CardComponentProps> = ({
       </motion.div>
     </motion.div>
   );
-};
+}

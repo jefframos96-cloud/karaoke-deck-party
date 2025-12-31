@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Shuffle, Play, RotateCcw, Sparkles, Mic, Layers, ListMusic, Dices, Eye, X, Download } from 'lucide-react';
+import { Shuffle, Play, RotateCcw, Sparkles, Mic, Layers, ListMusic, Dices, Eye, X, Download, Settings, Minus, Plus } from 'lucide-react';
 
 import { INITIAL_DECK } from './constants';
 import { CardData, GamePhase, CardCategory } from './types';
@@ -73,6 +73,8 @@ export default function App() {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showCatalog, setShowCatalog] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   
   // Audio context placeholder
@@ -81,6 +83,17 @@ export default function App() {
   };
 
   useEffect(() => {
+    // Load zoom pref
+    const savedZoom = localStorage.getItem('karaoke_zoom');
+    if (savedZoom) {
+      setZoomLevel(parseFloat(savedZoom));
+    } else {
+      // Auto-detect small screens and default to slightly smaller zoom
+      if (window.innerHeight < 700) {
+        setZoomLevel(0.85);
+      }
+    }
+
     // Listen for PWA install prompt
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
@@ -102,6 +115,12 @@ export default function App() {
       return () => clearTimeout(timer);
     }
   }, [phase]);
+
+  const updateZoom = (newZoom: number) => {
+    const clamped = Math.min(Math.max(newZoom, 0.5), 1.5);
+    setZoomLevel(clamped);
+    localStorage.setItem('karaoke_zoom', clamped.toString());
+  };
 
   // Group cards for the catalog view
   const groupedCards = useMemo(() => {
@@ -197,13 +216,65 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#0f0721] flex flex-col relative overflow-hidden">
+    // CHANGED: Changed overflow-hidden to overflow-y-auto to allow scrolling on small screens
+    <div className="min-h-screen w-full bg-[#0f0721] flex flex-col relative overflow-y-auto overflow-x-hidden">
       
-      {/* Background Ambience */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+      {/* Background Ambience - Fixed position so it doesn't scroll away */}
+      <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-900/30 rounded-full blur-[100px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-900/30 rounded-full blur-[100px]" />
       </div>
+
+      {/* SETTINGS MODAL */}
+      <AnimatePresence>
+        {showSettings && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[70] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setShowSettings(false)}
+          >
+             <motion.div 
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 20 }}
+                className="bg-[#1a103c] w-full max-w-sm rounded-3xl border border-white/10 p-6 shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+             >
+                <div className="flex justify-between items-center mb-6">
+                   <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                     <Settings size={20} className="text-pink-500" />
+                     Configuración
+                   </h2>
+                   <button onClick={() => setShowSettings(false)}><X className="text-white/60" /></button>
+                </div>
+                
+                <div className="mb-6">
+                   <label className="text-sm text-indigo-200 mb-3 block">Tamaño de la App (Zoom)</label>
+                   <div className="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/5">
+                      <button onClick={() => updateZoom(zoomLevel - 0.1)} className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white">
+                        <Minus size={16} />
+                      </button>
+                      <div className="flex-1 text-center font-mono text-cyan-400 font-bold">
+                        {Math.round(zoomLevel * 100)}%
+                      </div>
+                      <button onClick={() => updateZoom(zoomLevel + 0.1)} className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white">
+                        <Plus size={16} />
+                      </button>
+                   </div>
+                   <p className="text-xs text-white/40 mt-2 text-center">
+                     Ajusta si los elementos se ven muy grandes o pequeños.
+                   </p>
+                </div>
+                
+                <Button onClick={() => setShowSettings(false)} variant="primary" className="w-full">
+                  Listo
+                </Button>
+             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* CATALOG MODAL */}
       <AnimatePresence>
@@ -302,19 +373,31 @@ export default function App() {
             transition={{ duration: 0.8 }}
             className="flex-1 w-full flex flex-col items-center justify-between p-4 z-10"
           >
-            {/* Header */}
-            <header className="w-full flex flex-col items-center mt-6">
-              <div className="flex items-center gap-2 mb-2">
-                 <Mic className="text-pink-500 w-8 h-8" />
-                 <h1 className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 tracking-tighter">
-                   KARAOKE MASTER
-                 </h1>
-              </div>
-              <p className="text-indigo-300/80 text-sm font-medium">¡Que empiece la fiesta!</p>
+            {/* Header & Settings Button */}
+            <header className="w-full flex justify-between items-start mt-4 px-2 relative">
+               <div className="w-10"></div> {/* Spacer for centering */}
+               <div className="flex flex-col items-center">
+                  <div className="flex items-center gap-2 mb-2">
+                     <Mic className="text-pink-500 w-8 h-8" />
+                     <h1 className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 tracking-tighter">
+                     KARAOKE MASTER
+                     </h1>
+                  </div>
+                  <p className="text-indigo-300/80 text-sm font-medium">¡Que empiece la fiesta!</p>
+               </div>
+               <button 
+                  onClick={() => setShowSettings(true)}
+                  className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-full text-white/70 hover:text-white hover:bg-white/20 transition-all"
+               >
+                  <Settings size={20} />
+               </button>
             </header>
 
-            {/* Main Game Area */}
-            <main className="flex-1 w-full flex flex-col items-center justify-center min-h-[450px]">
+            {/* Main Game Area - Applied Scale Transform here */}
+            <main 
+                className="flex-1 w-full flex flex-col items-center justify-center min-h-[450px] transition-transform duration-300 origin-top"
+                style={{ transform: `scale(${zoomLevel})` }}
+            >
               
               <AnimatePresence mode="wait">
                 
@@ -382,7 +465,7 @@ export default function App() {
 
                 {/* PLAYING / READY / SHUFFLING AREA */}
                 {(phase === GamePhase.READY || phase === GamePhase.PLAYING || phase === GamePhase.SHUFFLING || phase === GamePhase.IDLE) && (
-                  <div className="relative w-72 h-96 sm:w-80 sm:h-[420px] flex items-center justify-center">
+                  <div className="relative w-64 h-80 sm:w-80 sm:h-[420px] flex items-center justify-center">
                     {deck.length === 0 ? (
                        <div className="text-white/50">Cargando baraja...</div>
                     ) : (
@@ -406,7 +489,7 @@ export default function App() {
                       <motion.div 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="absolute -bottom-12 text-white/50 text-sm animate-pulse pointer-events-none"
+                        className="absolute -bottom-12 text-white/50 text-sm animate-pulse pointer-events-none w-max"
                       >
                         Toca la carta para revelar
                       </motion.div>
@@ -417,7 +500,7 @@ export default function App() {
             </main>
 
             {/* Controls Footer */}
-            <footer className="w-full max-w-md mb-6 grid gap-4">
+            <footer className="w-full max-w-md mb-6 grid gap-4 relative z-10 px-4">
               
               {/* State: IDLE - Moved logic to Mode Selection, keeping button for AI or manual shuffle if in legacy IDLE state */}
               {phase === GamePhase.IDLE && (
